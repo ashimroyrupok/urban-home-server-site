@@ -42,6 +42,20 @@ async function run() {
 
         // users related api
 
+        app.patch('/users/:email' , async(req,res) =>  {
+            const email = req.params.email;
+            const data = req.body
+            console.log(data,email);
+            const filter = {email:email}
+            const docData ={
+                $set:{
+                    role: data.role
+                }
+            }
+            const result = await usersCollection.updateOne(filter,docData)
+            res.send(result)
+        })
+
         app.delete('/users/:email' , async(req,res)=>{
             const email  =req.params.email
             const query = {email :email}
@@ -66,6 +80,14 @@ async function run() {
         })
 
         // reviews
+
+        app.delete('/reviews/:email' , async(req,res) => {
+            const email = req.params.email;
+            const query = {email : email}
+            const result = await reviewsCollection.deleteOne(query)
+            res.send(result)
+        })
+
         app.get('/reviews', async (req, res) => {
             const result = await reviewsCollection.find().toArray()
             res.send(result)

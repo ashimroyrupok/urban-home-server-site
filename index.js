@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const app = express()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000
 
 
@@ -38,27 +38,63 @@ async function run() {
 
         const usersCollection = client.db('urbanDB').collection('users')
         const reviewsCollection = client.db('urbanDB').collection('reviews')
+        const PropertiesCollection = client.db('urbanDB').collection('properties')
 
 
-        // users related api
 
-        app.patch('/users/:email' , async(req,res) =>  {
-            const email = req.params.email;
-            const data = req.body
-            console.log(data,email);
-            const filter = {email:email}
-            const docData ={
-                $set:{
-                    role: data.role
-                }
-            }
-            const result = await usersCollection.updateOne(filter,docData)
+        // properties related api
+
+        app.post('/properties', async (req, res) => {
+            const data = req.body;
+            const result = await PropertiesCollection.insertOne(data)
             res.send(result)
         })
 
-        app.delete('/users/:email' , async(req,res)=>{
-            const email  =req.params.email
-            const query = {email :email}
+        app.get('/properties', async (req, res) => {
+            const result = await PropertiesCollection.find().toArray()
+            res.send(result)
+        })
+
+        app.get('/properties/:status', async(req,res) => {
+            const data = req.params.status;
+            console.log(data);
+            const query = {status: data}
+            const result = await PropertiesCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.patch('/properties/:id', async (req, res) => {
+            const id = req.params.id
+            const data = req.body
+            const query= { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set:{
+                    status: data?.status
+                }
+            }
+            const result = await PropertiesCollection.updateOne(query,updatedDoc)
+            res.send(result)
+        })
+
+        // users related api
+
+        app.patch('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const data = req.body
+            console.log(data, email);
+            const filter = { email: email }
+            const docData = {
+                $set: {
+                    role: data.role
+                }
+            }
+            const result = await usersCollection.updateOne(filter, docData)
+            res.send(result)
+        })
+
+        app.delete('/users/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { email: email }
             const result = await usersCollection.deleteOne(query)
             res.send(result)
         })
@@ -79,11 +115,18 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const result = await usersCollection.findOne(query)
+            res.send(result)
+        })
+
         // reviews
 
-        app.delete('/reviews/:email' , async(req,res) => {
+        app.delete('/reviews/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email : email}
+            const query = { email: email }
             const result = await reviewsCollection.deleteOne(query)
             res.send(result)
         })

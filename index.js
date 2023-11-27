@@ -57,7 +57,7 @@ async function run() {
 
         app.get('/properties/:info', async (req, res) => {
             const data = req.params.info;
-            console.log(data,"paramsdata");
+            console.log(data, "paramsdata");
             let query = { agentEmail: data }
             console.log("fast", query);
             let newKeyName = 'status';
@@ -71,12 +71,12 @@ async function run() {
             res.send(result)
         })
 
-            app.delete('/properties/:id' , async(req,res)=> {
-                const id = req.params.id;
-                const query = {_id: new ObjectId(id)}
-                const result = await PropertiesCollection.deleteOne(query)
-                res.send(result)
-            })
+        app.delete('/properties/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await PropertiesCollection.deleteOne(query)
+            res.send(result)
+        })
 
         app.patch('/properties/:id', async (req, res) => {
             const id = req.params.id
@@ -90,6 +90,26 @@ async function run() {
             const result = await PropertiesCollection.updateOne(query, updatedDoc)
             res.send(result)
         })
+
+
+        app.patch('/properties/updateProperty/:id', async (req, res) => {
+            const id = req.params.id
+            const data = req.body
+            console.log(data,"helloo");
+            const query = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    image: data.image,
+                    title: data?.title,
+                    location: data?.location ,
+                    maximumPrice: data?.maximumPrice ,
+                    minimumPrice: data?.minimumPrice 
+                }
+            }
+            const result = await PropertiesCollection.updateOne(query, updatedDoc)
+            res.send(result)
+        })
+
 
         // users related api
 

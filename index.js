@@ -55,24 +55,39 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/properties/:status', async(req,res) => {
-            const data = req.params.status;
-            console.log(data);
-            const query = {status: data}
+        app.get('/properties/:info', async (req, res) => {
+            const data = req.params.info;
+            console.log(data,"paramsdata");
+            let query = { agentEmail: data }
+            console.log("fast", query);
+            let newKeyName = 'status';
+            if (data === "verified" || data === "rejected") {
+                query[newKeyName] = data
+                delete query.agentEmail
+            }
+
+            console.log(query);
             const result = await PropertiesCollection.find(query).toArray()
             res.send(result)
         })
 
+            app.delete('/properties/:id' , async(req,res)=> {
+                const id = req.params.id;
+                const query = {_id: new ObjectId(id)}
+                const result = await PropertiesCollection.deleteOne(query)
+                res.send(result)
+            })
+
         app.patch('/properties/:id', async (req, res) => {
             const id = req.params.id
             const data = req.body
-            const query= { _id: new ObjectId(id) }
+            const query = { _id: new ObjectId(id) }
             const updatedDoc = {
-                $set:{
+                $set: {
                     status: data?.status
                 }
             }
-            const result = await PropertiesCollection.updateOne(query,updatedDoc)
+            const result = await PropertiesCollection.updateOne(query, updatedDoc)
             res.send(result)
         })
 

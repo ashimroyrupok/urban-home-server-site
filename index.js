@@ -39,6 +39,24 @@ async function run() {
         const usersCollection = client.db('urbanDB').collection('users')
         const reviewsCollection = client.db('urbanDB').collection('reviews')
         const PropertiesCollection = client.db('urbanDB').collection('properties')
+        const WishCollection = client.db('urbanDB').collection('wishlists')
+
+
+
+        // wishlists related api
+
+        app.post('/wishlists', async (req, res) => {
+            const data = req.body;
+            const result = await WishCollection.insertOne(data)
+            res.send(result)
+        })
+
+        app.get('/wishlists/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = { buyerEmail: email }
+            const result = await WishCollection.find(query).toArray()
+            res.send(result)
+        })
 
 
 
@@ -53,6 +71,14 @@ async function run() {
         app.get('/properties', async (req, res) => {
             const result = await PropertiesCollection.find().toArray()
             res.send(result)
+        })
+
+        app.get('/property/:id', async (req,res)=> {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await PropertiesCollection.findOne(query)
+            res.send(result)
+
         })
 
         app.get('/properties/:info', async (req, res) => {
@@ -168,6 +194,23 @@ async function run() {
 
         app.get('/reviews', async (req, res) => {
             const result = await reviewsCollection.find().toArray()
+            res.send(result)
+        })
+
+        app.get('/reviews/property/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { reviewProperty: id }
+            const result = await reviewsCollection.find(query).toArray()
+            res.send(result)
+            // const result = await reviewsCollection.find().toArray()
+            // res.send(result)
+        })
+
+
+
+        app.post('/reviews', async (req, res) => {
+            const data = req.body;
+            const result = await reviewsCollection.insertOne(data)
             res.send(result)
         })
 

@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const app = express()
+const stripe = require('stripe')(process.env.DB_PAYMENT_SECRET)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000
 
@@ -55,13 +56,19 @@ async function run() {
             const result = await soldCollection.find().toArray()
             res.send(result)
         })
+        app.get('/soldList/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await soldCollection.findOne(query)
+            res.send(result)
+        })
 
         app.patch('/soldList/reject/:title', async (req, res) => {
             const title = req.params.title;
             console.log(title);
-            const filter = {propertyTitle : title}
+            const filter = { propertyTitle: title }
             const docData = {
-                $set:{
+                $set: {
                     status: "rejected"
                 }
             }
@@ -290,6 +297,22 @@ async function run() {
             const data = req.body;
             const result = await reviewsCollection.insertOne(data)
             res.send(result)
+        })
+
+        // payment intent
+        app.post('/create-payment-intent', async (req, res) => {
+            const {price} = req.body;
+            console.log(price,"intent price");
+            const amount =  parseInt(price * 100)
+
+            const paymentIntent= await stripe.paymentIntents.create({
+                amount:amount,
+                currency:'usd',
+                payment_method_types:['card']
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
         })
 
 

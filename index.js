@@ -40,6 +40,16 @@ async function run() {
         const reviewsCollection = client.db('urbanDB').collection('reviews')
         const PropertiesCollection = client.db('urbanDB').collection('properties')
         const WishCollection = client.db('urbanDB').collection('wishlists')
+        const soldCollection = client.db('urbanDB').collection('soldList')
+
+
+
+        // sold collection
+        app.post('/sold', async (req, res) => {
+            const data = req.body;
+            const result = await soldCollection.insertOne(data)
+            res.send(result)
+        })
 
 
 
@@ -55,6 +65,20 @@ async function run() {
             const email = req.params.email;
             const query = { buyerEmail: email }
             const result = await WishCollection.find(query).toArray()
+            res.send(result)
+        })
+        app.get('/wishlists/toBuy/:id', async(req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) }
+            const result = await WishCollection.findOne(query)
+            res.send(result)
+        })
+
+        app.delete('/wishlists/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await WishCollection.deleteOne(query)
             res.send(result)
         })
 

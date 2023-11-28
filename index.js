@@ -51,6 +51,33 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/soldList', async (req, res) => {
+            const result = await soldCollection.find().toArray()
+            res.send(result)
+        })
+
+        app.patch('/soldList/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const data = req.body;
+            console.log(data, "dlsajfsjf");
+            const query = { _id: new ObjectId(id) }
+            const docData = {
+                $set: {
+                    status: data.status
+                }
+            }
+            const result = await soldCollection.updateOne(query, docData)
+            res.send(result)
+        })
+
+        app.get('/sold/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { buyerEmail: email }
+            const result = await soldCollection.find(query).toArray()
+            res.send(result)
+        })
+
 
 
         // wishlists related api
@@ -61,21 +88,21 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/wishlists/:email', async(req, res) => {
+        app.get('/wishlists/:email', async (req, res) => {
             const email = req.params.email;
             const query = { buyerEmail: email }
             const result = await WishCollection.find(query).toArray()
             res.send(result)
         })
-        app.get('/wishlists/toBuy/:id', async(req, res) => {
+        app.get('/wishlists/toBuy/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id);
+            // console.log(id);
             const query = { _id: new ObjectId(id) }
             const result = await WishCollection.findOne(query)
             res.send(result)
         })
 
-        app.delete('/wishlists/:id', async(req, res) => {
+        app.delete('/wishlists/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await WishCollection.deleteOne(query)
@@ -97,7 +124,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/property/:id', async (req,res)=> {
+        app.get('/property/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await PropertiesCollection.findOne(query)
@@ -145,15 +172,15 @@ async function run() {
         app.patch('/properties/updateProperty/:id', async (req, res) => {
             const id = req.params.id
             const data = req.body
-            console.log(data,"helloo");
+            console.log(data, "helloo");
             const query = { _id: new ObjectId(id) }
             const updatedDoc = {
                 $set: {
                     image: data.image,
                     title: data?.title,
-                    location: data?.location ,
-                    maximumPrice: data?.maximumPrice ,
-                    minimumPrice: data?.minimumPrice 
+                    location: data?.location,
+                    maximumPrice: data?.maximumPrice,
+                    minimumPrice: data?.minimumPrice
                 }
             }
             const result = await PropertiesCollection.updateOne(query, updatedDoc)
@@ -211,7 +238,14 @@ async function run() {
 
         app.delete('/reviews/:email', async (req, res) => {
             const email = req.params.email;
-            const query = { email: email }
+            const query = { reviewerEmail: email }
+            const result = await reviewsCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        app.delete('/review/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
             const result = await reviewsCollection.deleteOne(query)
             res.send(result)
         })
@@ -221,13 +255,20 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/reviews/property/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { reviewProperty: id }
+        app.get('/reviews/property/:title', async (req, res) => {
+            const title = req.params.title;
+            const query = { reviewProperty: title }
             const result = await reviewsCollection.find(query).toArray()
             res.send(result)
-            // const result = await reviewsCollection.find().toArray()
-            // res.send(result)
+        })
+
+
+
+        app.get('/reviews/user/:name', async (req, res) => {
+            const name = req.params.name;
+            const query = { reviewerName: name }
+            const result = await reviewsCollection.find(query).toArray()
+            res.send(result)
         })
 
 

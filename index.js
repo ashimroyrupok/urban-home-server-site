@@ -46,6 +46,11 @@ async function run() {
 
 
         // sold collection
+
+        app.get('/sold/agent/:email', async(req,res)=> {
+
+        })
+
         app.post('/sold', async (req, res) => {
             const data = req.body;
             const result = await soldCollection.insertOne(data)
@@ -70,6 +75,20 @@ async function run() {
             const docData = {
                 $set: {
                     status: "rejected"
+                }
+            }
+            const result = await soldCollection.updateMany(filter, docData)
+            res.send(result)
+        })
+        app.patch('/soldList/payment/:id', async (req, res) => {
+            const id = req.params.id;
+            const data =  req.body
+            console.log(id);
+            const filter = { _id: new ObjectId(id) }
+            const docData = {
+                $set: {
+                    status: data.status,
+                    transactionId: data.transactionId
                 }
             }
             const result = await soldCollection.updateMany(filter, docData)
@@ -187,6 +206,19 @@ async function run() {
             const result = await PropertiesCollection.updateOne(query, updatedDoc)
             res.send(result)
         })
+        app.patch('/properties/bought/:title', async (req, res) => {
+            const title = req.params.title
+            const data = req.body
+            console.log(data);
+            const query = { title: title }
+            const updatedDoc = {
+                $set: {
+                    status: data?.status
+                }
+            }
+            const result = await PropertiesCollection.updateOne(query, updatedDoc)
+            res.send(result)
+        })
 
 
         app.patch('/properties/updateProperty/:id', async (req, res) => {
@@ -272,6 +304,10 @@ async function run() {
 
         app.get('/reviews', async (req, res) => {
             const result = await reviewsCollection.find().toArray()
+            res.send(result)
+        })
+        app.get('/latestReview', async (req, res) => {
+            const result = await reviewsCollection.find().sort({timestamp:-1}).limit(4).toArray()
             res.send(result)
         })
 

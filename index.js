@@ -56,6 +56,19 @@ async function run() {
             res.send(result)
         })
 
+        app.patch('/soldList/reject/:title', async (req, res) => {
+            const title = req.params.title;
+            console.log(title);
+            const filter = {propertyTitle : title}
+            const docData = {
+                $set:{
+                    status: "rejected"
+                }
+            }
+            const result = await soldCollection.updateMany(filter, docData)
+            res.send(result)
+        })
+
         app.patch('/soldList/:id', async (req, res) => {
             const id = req.params.id;
             console.log(id);
@@ -238,7 +251,7 @@ async function run() {
 
         app.delete('/reviews/:email', async (req, res) => {
             const email = req.params.email;
-            const query = { reviewerEmail: email }
+            const query = { reviewerName: email }
             const result = await reviewsCollection.deleteOne(query)
             res.send(result)
         })

@@ -3,6 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const app = express()
 const stripe = require('stripe')(process.env.DB_PAYMENT_SECRET)
+const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000
 
@@ -33,6 +34,25 @@ const client = new MongoClient(uri, {
     }
 });
 
+
+
+const verifyToken = async (req, res, next) => {
+    console.log("inside verify token", req.headers?.authorization);
+
+    if (!req.headers.authorization) {
+        return res.status(401).send({ message: "forbidden access" });
+    }
+    const token = req.headers.authorization.split(" ")[1];
+
+    jwt.verify(token, process.env.DB_SECRET_KEY, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ message: "forbidden access" });
+        }
+        req.decoded = decoded;
+        next();
+    });
+};
+
 async function run() {
     try {
 
@@ -45,9 +65,22 @@ async function run() {
 
 
 
+
+        // JWT
+        app.post("/jwt", async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.DB_SECRET_KEY, { expiresIn: "3h" });
+            res.send({ token });
+        });
+
+
         // sold collection
 
-        app.get('/sold/agent/:email', async(req,res)=> {
+        app.get('/sold/agent/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { agentEmail: email, status: "bought" }
+            const result = await soldCollection.find(query).toArray()
+            res.send(result)
 
         })
 
@@ -57,12 +90,15 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/soldList', async (req, res) => {
-            const result = await soldCollection.find().toArray()
+        app.get('/soldList/:agentEmail', async (req, res) => {
+            const agentEmail = req.params.agentEmail;
+            const query = { agentEmail: agentEmail }
+            const result = await soldCollection.find(query).toArray()
             res.send(result)
         })
-        app.get('/soldList/:id', async (req, res) => {
+        app.get('/soldList/pay/:id', async (req, res) => {
             const id = req.params.id;
+            console.log(id,"id id");
             const query = { _id: new ObjectId(id) }
             const result = await soldCollection.findOne(query)
             res.send(result)
@@ -82,7 +118,7 @@ async function run() {
         })
         app.patch('/soldList/payment/:id', async (req, res) => {
             const id = req.params.id;
-            const data =  req.body
+            const data = req.body
             console.log(id);
             const filter = { _id: new ObjectId(id) }
             const docData = {
@@ -152,6 +188,38 @@ async function run() {
 
         // properties related api
 
+        app.get('/properties/advertisement', async (req, res) => {
+            const query = { advertised: true }
+            const result = await PropertiesCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.patch('/propertise/advertise/:id', async (req, res) => {
+            const id = req.params.id;
+            const data = req.body;
+            const query = { _id: new ObjectId(id) }
+            const docData = {
+                $set: {
+                    advertised: data.advertised
+                }
+            }
+            const result = await PropertiesCollection.updateOne(query, docData)
+            res.send(result)
+        })
+
+        app.get('/properties/verified',verifyToken, async (req, res) => {
+            const query = { status: 'verified' }
+            const data = req.query
+            console.log(data);
+            const options = {
+                sort: {
+                    minimumPrice: data.sort === 'asc' ? 1 : -1
+                }
+            }
+            const result = await PropertiesCollection.find(query, options).toArray()
+            res.send(result)
+        })
+
         app.post('/properties', async (req, res) => {
             const data = req.body;
             const result = await PropertiesCollection.insertOne(data)
@@ -209,7 +277,7 @@ async function run() {
         app.patch('/properties/bought/:title', async (req, res) => {
             const title = req.params.title
             const data = req.body
-            console.log(data);
+            // console.log(data);
             const query = { title: title }
             const updatedDoc = {
                 $set: {
@@ -220,11 +288,25 @@ async function run() {
             res.send(result)
         })
 
+        app.patch('/properties/fraud/:email', async (req, res) => {
+            const email = req.params.email
+            const data = req.body
+            // console.log(data);
+            const query = { agentEmail: email }
+            const updatedDoc = {
+                $set: {
+                    status: data?.status
+                }
+            }
+            const result = await PropertiesCollection.updateMany(query, updatedDoc)
+            res.send(result)
+        })
+
 
         app.patch('/properties/updateProperty/:id', async (req, res) => {
             const id = req.params.id
             const data = req.body
-            console.log(data, "helloo");
+            // console.log(data, "helloo");
             const query = { _id: new ObjectId(id) }
             const updatedDoc = {
                 $set: {
@@ -307,7 +389,7 @@ async function run() {
             res.send(result)
         })
         app.get('/latestReview', async (req, res) => {
-            const result = await reviewsCollection.find().sort({timestamp:-1}).limit(4).toArray()
+            const result = await reviewsCollection.find().sort({ date: -1 }).limit(4).toArray()
             res.send(result)
         })
 
@@ -337,14 +419,14 @@ async function run() {
 
         // payment intent
         app.post('/create-payment-intent', async (req, res) => {
-            const {price} = req.body;
-            console.log(price,"intent price");
-            const amount =  parseInt(price * 100)
+            const { price } = req.body;
+            console.log(price, "intent price");
+            const amount = parseInt(price * 100)
 
-            const paymentIntent= await stripe.paymentIntents.create({
-                amount:amount,
-                currency:'usd',
-                payment_method_types:['card']
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
             })
             res.send({
                 clientSecret: paymentIntent.client_secret

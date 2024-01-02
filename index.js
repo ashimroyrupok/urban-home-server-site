@@ -190,6 +190,20 @@ async function run() {
 
         // properties related api
 
+        // update after a long time 
+        app.patch('/propertise/advertise/fraud/:email', async (req, res) => {
+            const email = req.params.email;
+            const data = req.body;
+            const query = { agentEmail: email }
+            const docData = {
+                $set: {
+                    advertised: data.advertised
+                }
+            }
+            const result = await PropertiesCollection.updateMany(query, docData)
+            res.send(result)
+        })
+
         app.get('/properties/advertisement', async (req, res) => {
             const query = { advertised: true }
             const result = await PropertiesCollection.find(query).toArray()
